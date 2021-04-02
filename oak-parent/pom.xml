@@ -58,12 +58,12 @@
     <slf4j.api.version>1.7.30</slf4j.api.version>
     <slf4j.version>1.7.30</slf4j.version> <!-- sync with logback version -->
     <logback.version>1.2.3</logback.version>
-    <h2.version>1.4.194</h2.version>
+    <h2.version>1.4.200</h2.version>
     <tika.version>1.24.1</tika.version>
-    <guava.version>15.0</guava.version>
-    <guava.osgi.import>com.google.common.*;version="[15.0,21)"</guava.osgi.import>
+    <guava.version>30.1-jre</guava.version>
+    <guava.osgi.import>com.google.common.*;version="[15.0,30.01)"</guava.osgi.import>
     <derby.version>10.14.2.0</derby.version>
-    <jackson.version>2.10.3</jackson.version>
+    <jackson.version>2.12.2</jackson.version>
     <java.version>1.8</java.version>
     <java.version.signature>java18</java.version.signature>
     

@@ -20,7 +20,7 @@
 package org.apache.jackrabbit.oak.commons.jmx;
 
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static com.google.common.util.concurrent.MoreExecutors.newDirectExecutorService;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.Executors.newCachedThreadPool;
@@ -65,7 +65,7 @@ public class ManagementOperationTest {
         ManagementOperation<Integer> op = ManagementOperation.done("test", 42);
         assertTrue(op.isDone());
         assertEquals(42, (int) op.get());
-        sameThreadExecutor().execute(op);
+        newDirectExecutorService().execute(op);
     }
 
     @Test

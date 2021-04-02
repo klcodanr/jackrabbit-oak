@@ -23,17 +23,21 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
+
 import org.apache.jackrabbit.core.data.DataRecord;
 import org.apache.jackrabbit.oak.commons.concurrent.ExecutorCloser;
 import org.apache.jackrabbit.oak.commons.io.BurnOnCloseFileIterator;
@@ -48,7 +52,6 @@ import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.base.Predicates.alwaysTrue;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.io.Files.fileTreeTraverser;
 import static com.google.common.io.Files.move;
 import static com.google.common.io.Files.newWriter;
 import static java.io.File.createTempFile;
@@ -506,13 +509,13 @@ public class BlobIdTracker implements Closeable, BlobTracker {
             this.snapshotLock = new ReentrantLock();
 
             // Retrieve the process file if it exists
-            processFile =
-                fileTreeTraverser().breadthFirstTraversal(rootDir).firstMatch(IN_PROCESS.filter())
-                    .orNull();
+            processFile = StreamSupport.stream(MoreFiles.fileTraverser()
+                .breadthFirst(rootDir.toPath()).spliterator(),false).map(Path::toFile)
+                .filter(IN_PROCESS.filter()).findFirst().orElse(null);
 
             // Get the List of all generations available.
-            generations = synchronizedList(newArrayList(
-                fileTreeTraverser().breadthFirstTraversal(rootDir).filter(GENERATION.filter())));
+            generations = synchronizedList(newArrayList(StreamSupport.stream(MoreFiles.fileTraverser()
+                .breadthFirst(rootDir.toPath()).spliterator(),false).map(Path::toFile).filter(GENERATION.filter()).iterator()));
 
             // Close/rename any existing in process
             nextGeneration();

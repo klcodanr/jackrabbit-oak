@@ -24,12 +24,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
+import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -37,7 +39,8 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closeables;
-import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
@@ -75,20 +78,22 @@ public class OakFileDataStore extends FileDataStore implements SharedDataStore {
     @Override
     public Iterator<DataIdentifier> getAllIdentifiers() {
         final String path = normalizeNoEndSeparator(new File(getPath()).getAbsolutePath());
-        return Files.fileTreeTraverser().postOrderTraversal(new File(path))
-                .filter(new Predicate<File>() {
-                    @Override
-                    public boolean apply(File input) {
-                        return input.isFile() &&
-                            !input.getParent().equals(path);
-                    }
-                })
-                .transform(new Function<File, DataIdentifier>() {
-                    @Override
-                    public DataIdentifier apply(File input) {
-                        return new DataIdentifier(input.getName());
-                    }
-                }).iterator();
+        return StreamSupport.stream(MoreFiles.fileTraverser().depthFirstPostOrder(new File(path).toPath()).spliterator(), false)
+            .map(Path::toFile)
+            .filter(new Predicate<File>() {
+                @Override
+                public boolean apply(File input) {
+                    return input.isFile() &&
+                        !input.getParent().equals(path);
+                }
+            })
+            .map(new Function<File, DataIdentifier>() {
+                @Override
+                public DataIdentifier apply(File input) {
+                    return new DataIdentifier(input.getName());
+                }
+            }).iterator();
+                
     }
 
     @Override
@@ -274,7 +279,13 @@ public class OakFileDataStore extends FileDataStore implements SharedDataStore {
     public Iterator<DataRecord> getAllRecords() {
         final String path = normalizeNoEndSeparator(new File(getPath()).getAbsolutePath());
         final OakFileDataStore store = this;
-        return Files.fileTreeTraverser().postOrderTraversal(new File(path))
+        
+        
+        
+        
+        
+        return StreamSupport.stream(MoreFiles.fileTraverser().depthFirstPostOrder(new File(path).toPath()).spliterator(), false)
+            .map(Path::toFile)
             .filter(new Predicate<File>() {
                 @Override
                 public boolean apply(File input) {
@@ -282,7 +293,7 @@ public class OakFileDataStore extends FileDataStore implements SharedDataStore {
                         !input.getParent().equals(path);
                 }
             })
-            .transform(new Function<File, DataRecord>() {
+            .map(new Function<File, DataRecord>() {
                 @Override
                 public DataRecord apply(File input) {
                     return new FileDataRecord(store, new DataIdentifier(input.getName()), input);

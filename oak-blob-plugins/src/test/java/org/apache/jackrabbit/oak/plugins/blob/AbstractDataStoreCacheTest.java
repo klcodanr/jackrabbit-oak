@@ -239,7 +239,7 @@ public class AbstractDataStoreCacheTest {
             LOG.trace("After submitting to super....");
 
             futures.add(submit);
-            Futures.addCallback(submit, new TestFutureCallback<Integer>(afterLatch));
+            Futures.addCallback(submit, new TestFutureCallback<Integer>(afterLatch), delegate);
             LOG.trace("Added callback");
 
             return submit;

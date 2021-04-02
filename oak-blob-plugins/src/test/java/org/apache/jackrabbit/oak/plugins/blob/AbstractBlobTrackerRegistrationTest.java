@@ -20,10 +20,14 @@
 package org.apache.jackrabbit.oak.plugins.blob;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
+
 import org.apache.jackrabbit.oak.plugins.blob.datastore.BlobTracker;
 import org.apache.jackrabbit.oak.plugins.blob.datastore.DataStoreBlobStore;
 import org.apache.jackrabbit.oak.plugins.blob.datastore.DataStoreUtils;
@@ -111,12 +115,14 @@ public abstract class AbstractBlobTrackerRegistrationTest {
 
     private void assertTrackerReinitialized() {
         File blobIdFiles = new File(repoHome, "blobids");
-        ImmutableList<File> files =
-                Files.fileTreeTraverser().postOrderTraversal(blobIdFiles).filter(new Predicate<File>() {
-                    @Override public boolean apply(@Nullable File input) {
+        List<File> files = StreamSupport
+                .stream(MoreFiles.fileTraverser().depthFirstPostOrder(blobIdFiles.toPath()).spliterator(), false)
+                .map(Path::toFile).filter(new Predicate<File>() {
+                    @Override
+                    public boolean apply(@Nullable File input) {
                         return input.getAbsolutePath().endsWith(".process");
                     }
-                }).toList();
+                }).collect(Collectors.toList());
         assertEquals(1, files.size());
     }
 

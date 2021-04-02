@@ -19,15 +19,17 @@ package org.apache.jackrabbit.oak.plugins.blob;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.serialization.ValidatingObjectInputStream;
@@ -107,9 +109,10 @@ public class DataStoreCacheUpgradeUtils {
         final List<String> exceptions = ImmutableList.of("tmp", UPLOAD_STAGING_DIR, DOWNLOAD_DIR);
         File newDownloadDir = new File(path, DOWNLOAD_DIR);
 
+
         Iterator<File> iterator =
-            Files.fileTreeTraverser().postOrderTraversal(path)
-                .filter(new Predicate<File>() {
+            StreamSupport.stream(MoreFiles.fileTraverser().depthFirstPostOrder(path.toPath()).spliterator(),false)
+                .map(Path::toFile).filter(new Predicate<File>() {
                     @Override public boolean apply(File input) {
                         return input.isFile()
                             && !input.getParentFile().equals(path)

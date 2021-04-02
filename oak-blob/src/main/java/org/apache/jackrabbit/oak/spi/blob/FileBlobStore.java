@@ -23,16 +23,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.FluentIterable;
-import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -242,12 +243,13 @@ public class FileBlobStore extends AbstractBlobStore {
 
     @Override
     public Iterator<String> getAllChunkIds(final long maxLastModifiedTime) throws Exception {
-        FluentIterable<File> iterable = Files.fileTreeTraverser().postOrderTraversal(baseDir);
+        Iterable<Path> iterable = MoreFiles.fileTraverser().depthFirstPostOrder(baseDir.toPath());
         final Iterator<File> iter =
-                iterable.filter(new Predicate<File>() {
+            StreamSupport.stream(iterable.spliterator(), false).filter(new Predicate<Path>() {
                     // Ignore the directories and files newer than maxLastModifiedTime if specified
                     @Override
-                    public boolean apply(@Nullable File input) {
+                    public boolean apply(@Nullable Path p) {
+                        File input = p.toFile();
                         if (!input.isDirectory() && (
                                 (maxLastModifiedTime <= 0)
                                     || FileUtils.isFileOlder(input, maxLastModifiedTime))) {
@@ -255,7 +257,7 @@ public class FileBlobStore extends AbstractBlobStore {
                         }
                         return false;
                     }
-                }).iterator();
+                }).map(Path::toFile).iterator();
         return new AbstractIterator<String>() {
             @Override
             protected String computeNext() {

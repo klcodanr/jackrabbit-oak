@@ -24,7 +24,6 @@ import static com.google.common.collect.Iterables.get;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newConcurrentHashSet;
 import static com.google.common.util.concurrent.Futures.addCallback;
-import static com.google.common.util.concurrent.Futures.dereference;
 import static com.google.common.util.concurrent.Futures.immediateCancelledFuture;
 import static com.google.common.util.concurrent.MoreExecutors.listeningDecorator;
 import static java.lang.Boolean.parseBoolean;
@@ -77,6 +76,7 @@ import javax.management.ObjectName;
 
 import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
@@ -372,7 +372,7 @@ public class SegmentCompactionIT {
             public void onFailure(Throwable t) {
                 segmentCompactionMBean.error("Compactor error", t);
             }
-        });
+        }, executor);
     }
 
     private void scheduleWriter() {
@@ -396,7 +396,7 @@ public class SegmentCompactionIT {
                     writers.remove(futureWriter);
                     segmentCompactionMBean.error("Writer error", t);
                 }
-            });
+            }, executor);
         }
     }
 
@@ -427,7 +427,7 @@ public class SegmentCompactionIT {
                     readers.remove(futureReader);
                     segmentCompactionMBean.error("Node reader error", t);
                 }
-            });
+            }, executor);
         }
     }
 
@@ -452,7 +452,7 @@ public class SegmentCompactionIT {
                     references.remove(futureReference);
                     segmentCompactionMBean.error("Reference error", t);
                 }
-            });
+            }, executor);
         } else {
             scheduleReader();
         }
@@ -463,12 +463,12 @@ public class SegmentCompactionIT {
             Checkpoint checkpoint = new Checkpoint(nodeStore);
 
             // Flatmap that sh..
-            ListenableFuture<Void> futureCheckpoint = dereference(scheduler.schedule(
+            ListenableFuture<Void> futureCheckpoint = Futures.transformAsync(scheduler.schedule(
                 () -> {
                     checkpoint.acquire();
                     return scheduler.schedule(checkpoint::release, checkpointInterval, SECONDS);
                 },
-                rnd.nextInt(checkpointInterval), SECONDS));
+                rnd.nextInt(checkpointInterval), SECONDS), null, executor);
 
             checkpoints.add(futureCheckpoint);
             addCallback(futureCheckpoint, new FutureCallback<Object>() {
@@ -486,7 +486,7 @@ public class SegmentCompactionIT {
                     checkpoints.remove(futureCheckpoint);
                     segmentCompactionMBean.error("Checkpoint error", t);
                 }
-            });
+            }, executor);
         }
     }
 

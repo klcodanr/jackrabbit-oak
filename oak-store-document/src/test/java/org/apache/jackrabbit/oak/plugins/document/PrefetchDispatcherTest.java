@@ -72,7 +72,7 @@ public class PrefetchDispatcherTest {
         DocumentNodeState after = ns2.getRoot().fromExternalChange();
 
         PrefetchDispatcher dispatcher = new PrefetchDispatcher(
-                before, MoreExecutors.sameThreadExecutor());
+                before, MoreExecutors.newDirectExecutorService());
         numQueries.set(0);
         dispatcher.contentChanged(after, CommitInfo.EMPTY_EXTERNAL);
         // expect two queries for children: below /foo and /foo/bar

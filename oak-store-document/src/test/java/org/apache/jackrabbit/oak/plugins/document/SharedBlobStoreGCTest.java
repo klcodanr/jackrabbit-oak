@@ -339,7 +339,7 @@ public class SharedBlobStoreGCTest {
             this.gc = new MarkSweepGarbageCollector(
                             new DocumentBlobReferenceRetriever(ds),
                             (GarbageCollectableBlobStore) ds.getBlobStore(),
-                            MoreExecutors.sameThreadExecutor(),
+                            MoreExecutors.newDirectExecutorService(),
                             "./target", 5, 0, repoId);
             this.startDate = new Date();
             this.seed = seed;

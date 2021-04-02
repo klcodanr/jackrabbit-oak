@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -29,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.StreamSupport;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Stopwatch;
@@ -39,6 +41,8 @@ import com.google.common.cache.RemovalCause;
 import com.google.common.cache.Weigher;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.google.common.io.MoreFiles;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.jackrabbit.oak.cache.CacheLIRS;
 import org.apache.jackrabbit.oak.cache.CacheLIRS.EvictionCallback;
@@ -309,7 +313,8 @@ public class FileCache extends AbstractCache<String, File> implements Closeable 
         DataStoreCacheUpgradeUtils.moveDownloadCache(parent);
 
         // Iterate over all files in the cache folder
-        Iterator<File> iter = Files.fileTreeTraverser().postOrderTraversal(cacheRoot)
+        Iterator<File> iter = StreamSupport.stream(MoreFiles.fileTraverser().depthFirstPostOrder(cacheRoot.toPath()).spliterator(),false)
+            .map(Path::toFile)
             .filter(new Predicate<File>() {
                 @Override public boolean apply(File input) {
                     return input.isFile() && !normalizeNoEndSeparator(input.getParent())

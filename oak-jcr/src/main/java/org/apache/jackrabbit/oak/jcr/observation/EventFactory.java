@@ -30,6 +30,7 @@ import java.util.Map;
 import javax.jcr.Value;
 import javax.jcr.observation.Event;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -325,7 +326,7 @@ public class EventFactory {
 
         @Override
         public String toString() {
-            return Objects.toStringHelper("Event")
+            return MoreObjects.toStringHelper("Event")
                     .add("type", getType())
                     .add("path", getPath())
                     .add("identifier", getIdentifier())
